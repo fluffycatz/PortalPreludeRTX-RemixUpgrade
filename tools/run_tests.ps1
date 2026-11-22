@@ -61,7 +61,13 @@ function New-StockCopy([string]$Name) {
     return (Join-Path $dst $Game)
 }
 function Invoke-Upgrade([string]$Script, [string[]]$ArgList, [string]$From = $Repo) {
+    $ErrorActionPreference = 'Continue'   # Windows PowerShell 5.1 turns native stderr into errors; never let that stop a test
     $out = & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $From $Script) @ArgList 2>&1 | Out-String -Width 220
+    return [pscustomobject]@{ Out = $out; Code = $LASTEXITCODE }
+}
+function Invoke-Bat([string]$Bat, [string[]]$ArgList) {
+    $ErrorActionPreference = 'Continue'   # e.g. curl's progress meter goes to stderr during the download test
+    $out = & $Bat @ArgList 2>&1 | Out-String -Width 220
     return [pscustomobject]@{ Out = $out; Code = $LASTEXITCODE }
 }
 function Write-StockOver([string]$G) {   # what Steam's "Verify integrity" does: stock files back, extra files left
@@ -161,8 +167,8 @@ if ($BundleZip) {
         elseif (Test-Path -LiteralPath (Join-Path $env:USERPROFILE ('Downloads\' + $script:PackageName))) { Test-Result 'TD' $false 'skipped: the package is in Downloads, so it would not download'; continue }
         foreach ($f in Get-ChildItem -LiteralPath $dl -Recurse -File) { Set-Content -LiteralPath $f.FullName -Stream Zone.Identifier -Value "[ZoneTransfer]`r`nZoneId=3" }
         $g = New-StockCopy ($case.Id.ToLowerInvariant() + '-game')
-        $out = & (Join-Path $bundleRoot 'Install.bat') -GameDir $g 2>&1 | Out-String -Width 220
-        $code = $LASTEXITCODE
+        $res = Invoke-Bat (Join-Path $bundleRoot 'Install.bat') @('-GameDir', $g)
+        $out = $res.Out; $code = $res.Code
         $how = if ($case.WithZip) { 'zip in the folder above' } else { 'no zip anywhere: download from NVIDIA' }
         Test-Result $case.Id (($code -eq 0) -and ($out -match $(if ($case.WithZip) { 'Checking .*remix-1\.6\.1\.zip' } else { 'Downloaded and verified' }))) "Install.bat from the bundle ($how): exit $code"
         Test-SameAsReference $case.Id $g 'bundle install'

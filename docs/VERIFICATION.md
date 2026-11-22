@@ -37,6 +37,14 @@ The tests run on a stand-in for a fresh Steam install, built by `tools/test_tree
 
 The results of each release's own run are in that release's notes.
 
+### Results for v1.0.0 (2026-11-21)
+
+These results are for bundle `PortalPreludeRTX-RemixUpgrade-v1.0.0.zip`, SHA-256 `329364071e36b8c4e6f35558e15c564e67287780d8d30a64f5e63dddb317a753`:
+- **T1-T12: 21 of 21 checks passed.** Every "identical to the reference" check matched all 357 files in `bin\`. The uninstall check matched all 167 files of the stock stand-in.
+- **TD passed.** `Install.bat` downloaded the package from NVIDIA (863,551,854 bytes, SHA-256 matching NVIDIA's release, about 25 s on the test connection), installed it, and the result matched the reference (357/357).
+
+  The first run of `tools/run_tests.ps1` stopped at TD's bookkeeping. Windows PowerShell 5.1 turned curl's progress output on stderr into an error inside the runner, which is not something users see. The runner was fixed, the install from that run was compared separately, and T1-T12 were run again cleanly.
+
 ## Not covered
 
 - **A real Steam "Verify integrity" on a live install.** T5 and T10 simulate it: they put every stock file back and leave the files Steam does not know about. That matches how Steam's verify behaves, since it re-acquires changed or missing files and leaves other files alone. The real thing has not been run against this installer.
