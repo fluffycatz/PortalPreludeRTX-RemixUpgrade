@@ -1,0 +1,8 @@
+# Run logs from Install/Uninstall/Verify
+/logs/
+# NVIDIA's package is downloaded by the installer, never committed
+*.zip
+*.part
+*.remixupgrade-tmp
+/dist/
+__pycache__/
